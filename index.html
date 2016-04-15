@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Excel pivot tables!</title>
+
+  <script src="lib/jquery.min.js"></script>
+  <script src="dist/handsontable.full.js"></script>
+  <link rel="stylesheet" media="screen" href="dist/handsontable.full.css">
+    <script src="lib/bootstrap.js" type="text/javascript"></script>
+  <link href="css/bootstrap.css" rel="stylesheet" type="text/css">
+
+
+  <script>
+
+  var container, table;
+
+    $(document).ready(function() {
+
+      var data = [
+      ["John Smith", "Berkeley", "COM-ANA", "Grace 2102"],
+      ["Stephen Lee", "Taiwan", "COM-ANA", "Beacon"],
+      ["Josh Victor", "Taiwan", "UCLA", "Grace 2104"],
+      ["Josh Body", "Cambridge", "ELAC", "Grace 2104"]
+      ];
+
+      container = $('#input');
+      container.handsontable({
+        data: data,
+        minSpareRows: 1,
+        minRows: 5,
+        minCols: 4,
+        rowHeaders: true,
+        colHeaders: true,
+        contextMenu: true
+      });
+
+      // This way, you can access Handsontable api methods by passing their names as an argument, e.g.:
+      table = $("#input").handsontable('getInstance');
+
+      $('#pivotbtn').click(function(e) {
+        // pivot table keeps track of all the other row name with same set values
+        var pvTable = {};
+        // this set keeps track of all repeating columns with same value
+        var colSet = {};
+        console.log('data', table.getData());
+        var d = table.getData(),
+            row, cell, title, colName;
+        for (var r in d) {
+          row = d[r];
+          title = row[0];
+          if (!title) {
+            // Skip empty rows
+            continue;
+          }
+          pvTable[title] = {};
+          for (var c = 1; c < row.length; c++) {
+            cell = row[c];
+            colName = 'col-' + c;
+            if (! (colName in colSet)) {
+              colSet[colName] = [];
+            }
+            col = colSet[colName];
+            if (cell) {
+              if (cell in col) {
+                colSet[colName][cell].push(title);
+              } else {
+                colSet[colName][cell] = [title];
+              }
+            }
+          }
+        }
+
+        console.log('colSet', colSet, pvTable);
+
+        var val, mergeList;
+
+        var popList = [];
+
+        // Loop through all the colSet and merge into pvTable for all common occurrences
+        for (var i in colSet) {
+          col = colSet[i];
+          for (var val in col) {
+            // For each column, grab all the common sets and add to each title in pvTable
+            inCommon = col[val]
+            while (inCommon.length > 0) {
+              title = inCommon.pop();
+              mergeList = popList.concat(inCommon);
+
+              // Put in every other element into set of that title
+              for (var m in mergeList) {
+                pvTable[title][mergeList[m]] = true;
+              }
+
+              popList.push(title);
+            }
+
+            popList = [];
+          }
+        }
+
+        console.log('colSet', colSet, pvTable);
+
+        // Translate set to array
+function _setToArray(dict) {
+  var array = [];
+  for (var key in dict) {
+    if (dict.hasOwnProperty(key)) {
+      array.push(key);
+    }
+  }
+  return array;
+}
+
+        // Go through pvTable and create a list of titles in common with each table
+        var outputData = [],
+            otherList;
+        for (var t in pvTable) {
+          title = pvTable
+          otherList = _setToArray(pvTable[t])
+          outputData.push([t].concat(otherList));
+        }
+
+        console.log('outputdata', outputData);
+
+        outputContainer = $('#output');
+        outputContainer.handsontable({
+          data: outputData,
+          minSpareRows: 1,
+          minRows: 5,
+          minCols: 4,
+          rowHeaders: true,
+          colHeaders: true,
+          contextMenu: true
+        });
+
+
+
+      });
+    });
+
+  </script>
+</head>
+<body>
+
+  <div class="container-fluid">
+    <h3>Pivot Table - Helps you pivot tables that's hard to do in Excel</h3>
+    <p class="well">Paste excel data into table and hit pivot! <button id="pivotbtn" class="btn btn-primary pull-right">Pivot!</button></p>
+
+    <div class="col-md-6">
+      <div id="input"></div>
+    </div>
+
+    <div class="col-md-6">
+      <div id="output"></div>
+    </div>
+
+  </div>
+</body>
+</html>
