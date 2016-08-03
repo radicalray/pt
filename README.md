@@ -5,6 +5,8 @@ I HATE Excel. I can't do any simple operations on my data without killing myself
 
 So...I wrote this to help you pivot tables. Take all rows with same column value and merge them together.
 
+### Demo
+http://radicalray.github.io/pt/
 
 ### Technology
 1. handsontable for excel UI
